@@ -1,3 +1,7 @@
 package main
 
-func main() {}
+import "peer-chat/Init"
+
+func main() {
+	_ = Init.Init()
+}
