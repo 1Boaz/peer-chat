@@ -21,6 +21,7 @@ func createServer(port string) net.Listener {
 		log.Fatal("Couldn't use the selected port(" + port + "), Error: " + err.Error())
 	}
 
+	log.Print("Listening on: " + port)
 	return listener
 }
 
