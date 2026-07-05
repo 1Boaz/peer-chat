@@ -8,20 +8,25 @@ import (
 )
 
 // Init Main initializing function to call other functions in this package in sequence
-func Init() net.Listener {
+func Init() *net.UDPConn {
 	port := parse()
 	return createServer(strconv.Itoa(port))
 }
 
-// createServer Initializes a tcp server and return the listener(server)
-func createServer(port string) net.Listener {
-	listener, err := net.Listen("tcp", ":"+port)
-	// verifies that net.Listen executed without errors
+// createServer Initializes an udp server and returns the listener(server)
+func createServer(port string) *net.UDPConn {
+	// Resolve the server listening address
+	addr, err := net.ResolveUDPAddr("udp", ":"+port)
 	if err != nil {
-		log.Fatal("Couldn't use the selected port(" + port + "), Error: " + err.Error())
+		log.Fatal("Error resolving address for UDP server: " + err.Error())
 	}
 
-	log.Print("Listening on: " + port)
+	// Creates a listener on the resolved address
+	listener, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		log.Fatal("Error starting UDP server: " + err.Error())
+	}
+
 	return listener
 }
 

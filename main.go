@@ -12,7 +12,7 @@ func main() {
 	server := Init.Init()
 
 	// closes the connection when program is done
-	defer func(server net.Listener) {
+	defer func(server *net.UDPConn) {
 		err := server.Close()
 		if err != nil {
 			log.Fatal("Error closing server: " + err.Error())
