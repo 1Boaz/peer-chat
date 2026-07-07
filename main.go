@@ -11,7 +11,7 @@ import (
 func main() {
 	server := Init.Init()
 
-	// closes the connection when program is done
+	// Closes the connection when program is done
 	defer func(server *net.UDPConn) {
 		err := server.Close()
 		if err != nil {
