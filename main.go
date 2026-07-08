@@ -9,7 +9,10 @@ import (
 
 // Main function should be minimal
 func main() {
-	server := Init.Init()
+	server, err := Init.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Closes the connection when program is done
 	defer func(server *net.UDPConn) {

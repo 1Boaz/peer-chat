@@ -1,45 +1,53 @@
 package Init
 
 import (
+	"errors"
 	"flag"
-	"log"
 	"net"
 	"strconv"
 )
 
 // Init Main initializing function to call other functions in this package in sequence
-func Init() *net.UDPConn {
-	port := parse()
+func Init() (*net.UDPConn, error) {
+	port, err := parse()
+	if err != nil {
+		return nil, err
+	}
 	return createServer(strconv.Itoa(port))
 }
 
 // createServer Initializes an udp server and returns the listener(server)
-func createServer(port string) *net.UDPConn {
+func createServer(port string) (*net.UDPConn, error) {
 	// Resolve the server listening address
 	addr, err := net.ResolveUDPAddr("udp", ":"+port)
 	if err != nil {
-		log.Fatal("Error resolving address for UDP server: " + err.Error())
+		return nil, err
 	}
 
 	// Creates a listener on the resolved address
 	listener, err := net.ListenUDP("udp", addr)
 	if err != nil {
-		log.Fatal("Error starting UDP server: " + err.Error())
+		return nil, err
 	}
 
-	return listener
+	return listener, nil
 }
 
 // parse parses the port cmd argument
-func parse() int {
-	// crates a flag named port, with a default value and a help message
-	var Port = flag.Int("port", 31415, "port to listen and send on")
+func parse() (int, error) {
+	// Crates a flag named port, with a default value and a help message
+	var Port = flag.String("port", "31415", "port to listen and send on")
 	flag.Parse()
 
-	// verifies flag(port) number is valid
-	if *Port > 65_535 || *Port < 1 {
-		log.Fatal("Port must be lower than 65_535(max port number) and higher than 1")
+	// Converts the string flag into integer helping with error handling
+	port, err := strconv.Atoi(*Port)
+	if err != nil {
+		return 0, errors.New("invalid port, port must be a number")
 	}
 
-	return *Port
+	// verifies flag(port) number is valid
+	if port > 65_535 || port < 1 {
+		return 0, errors.New("port must be between 1 and 65_535")
+	}
+	return port, nil
 }
