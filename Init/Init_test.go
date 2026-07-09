@@ -1,63 +1,64 @@
 package Init
 
 import (
-	"flag"
-	"os"
-	"strconv"
+	"errors"
+	"net"
 	"testing"
 )
 
-func TestParse(t *testing.T) {
-	// Restores old Args when function is finished
-	oldArgs := os.Args
-	defer func() { os.Args = oldArgs }()
-
-	cases := []string{"8080", "", "-5", "not_a_port", "1000000000"}
-
-	for _, testCase := range cases {
-		// Sets the Args to one of the array
-		os.Args = []string{os.Args[0], "-port", testCase}
-
-		// Rests CMD flags
-		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-
-		// Calls the tested function
-		port, err := parse()
-
-		// When tests should fail verify correct error message
-		switch testCase {
-		case "not_a_port", "":
-			// If case is invalid and parse did not return an error fail the test
-			if err == nil {
-				t.Errorf("Parse() should have returned an error for invalid port")
-				// If it did return an error skip the comparison test for this case
-			} else {
-				continue
+func TestCreateServer(t *testing.T) {
+	// Creates a function to verify each case more easily
+	// exp stands for expected
+	verify := func(expOut string, expErr error, out *net.UDPConn, err error) {
+		if expErr != nil {
+			// Makes sure the error is the same as expected
+			if err.Error() != expErr.Error() {
+				t.Errorf("CreateServer() returned %v but expected %v", err, expErr)
 			}
-		// Same for all the cases
-		case "-5":
-			if err == nil {
-				t.Errorf("Parse() should have returned an error for too low port number")
+		} else {
+			if err != nil {
+				t.Errorf("CreateServer() returned error: %v; when it shouldn`t", err)
 			} else {
-				continue
+				// This checks the expected output(expOut) against the host + port
+				if expOut != out.LocalAddr().String() {
+					t.Errorf("CreateServer() returned %v but expected %v", out.LocalAddr().String(), expOut)
+				}
 			}
-		case "1000000000":
-			if err == nil {
-				t.Errorf("Parse() should have returned an error for too high port number")
-			} else {
-				continue
-			}
-		}
-
-		// Converts the test case to integer, safe because parse should return error with non input integer
-		testCaseInt, err := strconv.Atoi(testCase)
-		if err != nil {
-			t.Errorf("parse(%q) should have failed but did not", testCase)
-		}
-
-		// Compares parsed port to the inputted test case
-		if port != testCaseInt {
-			t.Errorf("Port should be %v got: %v", testCase, port)
 		}
 	}
+
+	// Case for a valid input
+	server, err := createServer("8080")
+	if server != nil {
+		defer server.Close()
+	}
+	verify("[::]:8080", nil, server, err)
+
+	// Case for an invalid port number input
+	server, err = createServer("1000000")
+	if server != nil {
+		defer server.Close()
+	}
+	verify("", errors.New("invalid port: 1000000"), server, err)
+
+	// Case for an invalid port number input
+	server, err = createServer("10000.5")
+	if server != nil {
+		defer server.Close()
+	}
+	verify("", errors.New("invalid port: 10000.5"), server, err)
+
+	// Case for a noninteger port
+	server, err = createServer("-21")
+	if server != nil {
+		defer server.Close()
+	}
+	verify("", errors.New("invalid port: -21"), server, err)
+
+	// Case for a reserved port
+	server, err = createServer("22")
+	if server != nil {
+		defer server.Close()
+	}
+	verify("", errors.New("listen udp :22: bind: permission denied"), server, err)
 }
