@@ -19,6 +19,9 @@ func TestCreateServer(t *testing.T) {
 			if err != nil {
 				t.Errorf("CreateServer() returned error: %v; when it shouldn`t", err)
 			} else {
+				if out == nil {
+					t.Errorf("CreateServer() returned %v but expected %v", out, nil)
+				}
 				// This checks the expected output(expOut) against the host + port
 				if expOut != out.LocalAddr().String() {
 					t.Errorf("CreateServer() returned %v but expected %v", out.LocalAddr().String(), expOut)
