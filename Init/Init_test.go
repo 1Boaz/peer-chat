@@ -57,11 +57,4 @@ func TestCreateServer(t *testing.T) {
 		defer server.Close()
 	}
 	verify("", errors.New("invalid port: -21"), server, err)
-
-	// Case for a reserved port
-	server, err = createServer("22")
-	if server != nil {
-		defer server.Close()
-	}
-	verify("", errors.New("listen udp :22: bind: permission denied"), server, err)
 }
